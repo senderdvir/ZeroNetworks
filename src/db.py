@@ -2,6 +2,16 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 import psycopg2
+import logging
+import os
+from typing import List
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def get_postgres_connection() -> Engine:
@@ -9,63 +19,105 @@ def get_postgres_connection() -> Engine:
     Establish a SQLAlchemy Engine connected to the PostgreSQL database.
 
     Returns:
-        sqlalchemy.engine.Engine: A SQLAlchemy engine for PostgreSQL.
+        Engine: SQLAlchemy Engine instance for PostgreSQL.
 
     Raises:
-        Exception: If the connection fails.
+        Exception: If the engine creation fails.
     """
-    return create_engine('postgresql+psycopg2://spacex:spacex@localhost:5432/launches')
+    try:
+        engine = create_engine('postgresql+psycopg2://spacex:spacex@localhost:5432/launches')
+        logger.info("Successfully created PostgreSQL engine.")
+        return engine
+    except Exception as e:
+        logger.exception("Failed to create PostgreSQL engine.")
+        raise
 
 
 def insert_data_to_postgres(data: pd.DataFrame, table_name: str) -> None:
     """
-    Insert a pandas DataFrame into a PostgreSQL table using SQLAlchemy.
+    Insert a pandas DataFrame into a PostgreSQL table.
 
     Args:
-        data (pd.DataFrame): The DataFrame to insert.
-        table_name (str): Target table name in PostgreSQL.
+        data (pd.DataFrame): Data to insert.
+        table_name (str): Target table name.
 
     Notes:
-        - Appends data to the table.
-        - Uses multi-row insert for performance.
+        - Uses multi-row inserts for performance.
+        - Assumes DataFrame columns match DB table.
     """
+    if data.empty:
+        logger.warning(f"No data to insert into '{table_name}'. Skipping.")
+        return
+
+    engine = get_postgres_connection()
+    try:
+        data.to_sql(
+            table_name,
+            con=engine,
+            if_exists='append',
+            index=False,
+            method='multi'
+        )
+        logger.info(f"Inserted {len(data)} rows into '{table_name}'.")
+    except Exception as e:
+        logger.exception(f"Failed to insert data into '{table_name}'.")
+        raise
+
+
+def execute_aggregate_query(sql_path: str = 'sql/aggregate_table.sql') -> None:
+    """
+    Execute the aggregate query SQL script to populate or update summary tables.
+
+    Args:
+        sql_path (str): Path to the SQL file containing the aggregate query.
+    """
+    if not os.path.isfile(sql_path):
+        logger.error(f"SQL file not found: {sql_path}")
+        raise FileNotFoundError(f"{sql_path} does not exist.")
+
+    engine = get_postgres_connection()
+    try:
+        with open(sql_path, 'r') as file:
+            query = file.read()
+
+        with engine.begin() as conn:
+            conn.execute(text(query))
+        logger.info(f"Aggregate query from '{sql_path}' executed successfully.")
+    except Exception as e:
+        logger.exception(f"Failed to execute aggregate query from '{sql_path}'.")
+        raise
+
+
+def init_tables(sql_files: List[str] = None) -> None:
+    """
+    Initialize required PostgreSQL tables using provided SQL DDL files.
+
+    Args:
+        sql_files (List[str], optional): List of SQL DDL file paths. Defaults to standard files.
+    """
+    if sql_files is None:
+        sql_files = [
+            'sql/create_payloads_table.sql',
+            'sql/create_launches_table.sql',
+            'sql/create_aggregate_table.sql',
+            'sql/create_launchpad_table.sql'
+        ]
+
     engine = get_postgres_connection()
 
-    # Ensure columns are ordered to match the DB schema if needed
-    data.to_sql(
-        table_name,
-        con=engine,
-        if_exists='append',
-        index=False,
-        method='multi'
-    )
-
-def execute_aggregate_query()-> None:
-    
-    engine = get_postgres_connection()
-    with open('sql/aggregate_table.sql', 'r') as file:
-        create_payloads_query = file.read()
-    
-    with engine.begin() as connection:
-        connection.execute(text(create_payloads_query))
-
-
-def init_tables() -> None:
-    """
-    Initialize required tables by executing SQL schema files.
-
-    Reads SQL DDL files and executes them to create tables
-    if they do not already exist.
-    """
-    engine = get_postgres_connection()
-    files_name = ['sql/create_payloads_table.sql', 'sql/create_launches_table.sql', 'sql/create_aggregate_table.sql', 'sql/create_launchpad_table.sql']
-    for file in files_name:
-        if not file.endswith('.sql'):
+    for file_path in sql_files:
+        if not file_path.endswith('.sql') or not os.path.isfile(file_path):
+            logger.warning(f"Skipping invalid or missing file: {file_path}")
             continue
-        with open(file, 'r') as f:
-            ddl_statement = f.read()
-    # Read SQL schema files
-    
-        with engine.begin() as connection:
-            # Execute each DDL statement
-            connection.execute(text(ddl_statement))
+
+        try:
+            with open(file_path, 'r') as f:
+                ddl_statement = f.read()
+
+            with engine.begin() as conn:
+                conn.execute(text(ddl_statement))
+
+            logger.info(f"Executed DDL from '{file_path}' successfully.")
+        except Exception as e:
+            logger.exception(f"Failed to execute DDL from '{file_path}'.")
+            raise

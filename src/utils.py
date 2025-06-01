@@ -1,51 +1,83 @@
 import json
+import logging
 import pandas as pd
+from pandas import DataFrame
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
-def create_df_from_json(response_data: dict) -> pd.DataFrame:
+def create_df_from_json(response_data: dict) -> DataFrame:
     """
-    Convert nested JSON/dict data into a flat pandas DataFrame.
+    Convert a nested dictionary or JSON-like object into a flat pandas DataFrame.
 
     Args:
-        response_data (dict): Raw JSON response or dictionary to normalize.
+        response_data (dict): A single JSON/dict object to normalize.
 
     Returns:
-        pd.DataFrame: Normalized DataFrame.
+        pd.DataFrame: A flattened DataFrame representing the JSON structure.
+
+    Raises:
+        ValueError: If response_data is not a dictionary.
     """
-    return pd.json_normalize(response_data)
+    if not isinstance(response_data, dict):
+        logger.error("Input data is not a dictionary.")
+        raise ValueError("Input must be a dictionary.")
+
+    try:
+        df = pd.json_normalize(response_data)
+        logger.debug("Successfully normalized JSON data into DataFrame.")
+        return df
+    except Exception as e:
+        logger.exception("Failed to normalize JSON to DataFrame.")
+        raise
 
 
-def serialize_dict_columns(df: pd.DataFrame) -> pd.DataFrame:
+def serialize_dict_columns(df: DataFrame) -> DataFrame:
     """
-    Serialize any dictionary-type columns in a DataFrame to JSON strings.
+    Serialize any columns containing Python dictionaries into JSON strings.
 
     Args:
-        df (pd.DataFrame): DataFrame to process.
+        df (pd.DataFrame): The input DataFrame.
 
     Returns:
-        pd.DataFrame: DataFrame with dict columns serialized.
+        pd.DataFrame: DataFrame with dict-type columns converted to JSON strings.
 
     Notes:
-        This is useful before inserting data into SQL databases,
-        which do not natively support Python dicts.
+        This is helpful before inserting into SQL databases which don't support raw dicts.
     """
-    for col in df.columns:
-        if df[col].apply(lambda x: isinstance(x, dict)).any():
-            df[col] = df[col].apply(lambda x: json.dumps(x) if isinstance(x, dict) else x)
-    return df
+    try:
+        for col in df.columns:
+            if df[col].apply(lambda x: isinstance(x, dict)).any():
+                logger.debug(f"Serializing column '{col}' with dict values.")
+                df[col] = df[col].apply(lambda x: json.dumps(x) if isinstance(x, dict) else x)
+        return df
+    except Exception as e:
+        logger.exception("Failed to serialize dictionary columns.")
+        raise
 
 
-def clean_for_sql(df: pd.DataFrame) -> pd.DataFrame:
+def clean_for_sql(df: DataFrame) -> DataFrame:
     """
-    Recursively convert all dict cells in a DataFrame to JSON strings.
+    Convert all dictionary values in the DataFrame to JSON strings.
 
     Args:
-        df (pd.DataFrame): DataFrame to clean.
+        df (pd.DataFrame): The input DataFrame.
 
     Returns:
-        pd.DataFrame: Cleaned DataFrame with all dict cells serialized.
-    """
-    def convert_cell(cell):
-        return json.dumps(cell) if isinstance(cell, dict) else cell
+        pd.DataFrame: A DataFrame safe for SQL insertions.
 
-    return df.applymap(convert_cell)
+    Notes:
+        Uses applymap to clean every cell in the DataFrame.
+    """
+    try:
+        cleaned_df = df.applymap(lambda cell: json.dumps(cell) if isinstance(cell, dict) else cell)
+        logger.debug("Successfully cleaned DataFrame for SQL insertion.")
+        return cleaned_df
+    except Exception as e:
+        logger.exception("Failed to clean DataFrame for SQL.")
+        raise

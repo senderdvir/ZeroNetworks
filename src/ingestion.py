@@ -1,7 +1,6 @@
 import os
 import time
 import requests
-import pandas as pd
 import logging
 from sqlalchemy import create_engine
 from analytics import run_analytics_queries

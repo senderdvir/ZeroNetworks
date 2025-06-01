@@ -1,7 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
-import psycopg2
 import logging
 import os
 from typing import List
@@ -61,7 +60,7 @@ def insert_data_to_postgres(data: pd.DataFrame, table_name: str) -> None:
         logger.info(f"Inserted {len(data)} rows into '{table_name}'.")
     except Exception as e:
         logger.exception(f"Failed to insert data into '{table_name}'.")
-        raise
+        
 
 
 def execute_aggregate_query(sql_path: str = 'sql/aggregate_table.sql') -> None:
@@ -121,3 +120,11 @@ def init_tables(sql_files: List[str] = None) -> None:
         except Exception as e:
             logger.exception(f"Failed to execute DDL from '{file_path}'.")
             raise
+
+def truncate_tables() -> None:
+    engine = get_postgres_connection()
+    with open("sql/truncate_tables.sql", 'r') as f:
+        ddl_statement = f.read()
+    with engine.begin() as conn:
+                conn.execute(text(ddl_statement))
+    

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS public.launchpad_raw_data
 (   
-    id TEXT,
+    id TEXT PRIMARY KEY,
     name TEXT,
     full_name TEXT,
     region TEXT,

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS public.payloads_raw_data
 (
-    id TEXT ,
+    id TEXT PRIMARY KEY,
     name TEXT,    
     launch TEXT,
     mass_kg BIGINT,

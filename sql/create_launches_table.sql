@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS public.launches_raw_data
 (
-    id TEXT ,
+    id TEXT PRIMARY KEY,
     name TEXT,
     date_utc TIMESTAMP,
     rocket TEXT,

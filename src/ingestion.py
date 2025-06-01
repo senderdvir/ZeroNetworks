@@ -128,22 +128,22 @@ def ingest_launches_data() -> None:
         logger.error(f"Failed to process launch with ID: {launch_json.get('id')}", exc_info=True)
 
 # Uncomment the following function if you want to ingest all launches data (history)
-def ingest_launches_data() -> None:
-    """
-    Fetch, transform, and ingest all historical launches into the database.
-    Each launch can contain multiple payloads, which are exploded.
-    """
-    launches_json = fetch_data(SPACEX_API_URL_LAUNCHES)
-    logger.info(f"Ingesting {len(launches_json)} launches")
+# def ingest_launches_data() -> None:
+#     """
+#     Fetch, transform, and ingest all historical launches into the database.
+#     Each launch can contain multiple payloads, which are exploded.
+#     """
+#     launches_json = fetch_data(SPACEX_API_URL_LAUNCHES)
+#     logger.info(f"Ingesting {len(launches_json)} launches")
 
-    for launch in launches_json:
-        try:
-            mapped = map_launch_data(launch)
-            df = create_df_from_json(mapped)
-            df = df.explode("payloads").reset_index(drop=True)
-            insert_data_to_postgres(df, "launches_raw_data")
-        except Exception:
-            logger.error(f"Failed to process launch with ID: {launch.get('id')}", exc_info=True)
+#     for launch in launches_json:
+#         try:
+#             mapped = map_launch_data(launch)
+#             df = create_df_from_json(mapped)
+#             df = df.explode("payloads").reset_index(drop=True)
+#             insert_data_to_postgres(df, "launches_raw_data")
+#         except Exception:
+#             logger.error(f"Failed to process launch with ID: {launch.get('id')}", exc_info=True)
 
 
 def ingest_payloads_data() -> None:

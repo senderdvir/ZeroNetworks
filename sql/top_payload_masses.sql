@@ -1,6 +1,5 @@
 WITH clean_data AS (
 	SELECT
-		
         lnc.name AS launch_name,
 		SUM(pld.mass_kg) AS sum_of_mass
 	FROM postgres.public.launches_raw_data AS lnc

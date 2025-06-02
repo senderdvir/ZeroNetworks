@@ -122,9 +122,34 @@ def init_tables(sql_files: List[str] = None) -> None:
             raise
 
 def truncate_tables() -> None:
+    """
+    Truncate all tables in the PostgreSQL database to reset data.
+    This is useful for cleaning up before re-ingesting data.
+    """
     engine = get_postgres_connection()
-    with open("sql/truncate_tables.sql", 'r') as f:
-        ddl_statement = f.read()
-    with engine.begin() as conn:
-                conn.execute(text(ddl_statement))
+    try:
+        with open("sql/truncate_tables.sql", 'r') as f:
+            ddl_statement = f.read()
+        with engine.begin() as conn:
+            conn.execute(text(ddl_statement))
+        logger.info("All tables truncated successfully.")
+    except Exception as e:
+        logger.exception("Failed to truncate tables.")
+        raise
+
+def run_db_rules() -> None:
+    """
+    Execute database rules or constraints to ensure data integrity.
+    This can include triggers, constraints, etc.
+    """
+    engine = get_postgres_connection()
+    try:
+        with open("sql/db_rules.sql", 'r') as f:
+            ddl_statement = f.read()
+        with engine.begin() as conn:
+            conn.execute(text(ddl_statement))
+        logger.info("Database rules executed successfully.")
+    except Exception as e:
+        logger.exception("Failed to execute database rules.")
+        raise
     

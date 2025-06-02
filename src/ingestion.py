@@ -11,7 +11,7 @@ from config import (
     SPACEX_API_URL_LAUNCHPAD,
     SPACEX_API_URL_LAUNCHES
 )
-from db import insert_data_to_postgres, init_tables, execute_aggregate_query, truncate_tables
+from db import insert_data_to_postgres, init_tables, execute_aggregate_query, truncate_tables, run_db_rules
 from utils import create_df_from_json
 
 # Configure logging
@@ -197,6 +197,7 @@ def run() -> None:
     logger.info("Starting ETL pipeline.")
     try:
         init_tables()
+        run_db_rules()
         ingest_launches_data()
         ingest_payloads_data()
         ingest_launchpad_data()

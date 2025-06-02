@@ -17,15 +17,16 @@
 ### Assumptions
 1. **Ingestion**:
    - The ingestion process is implemented in Python and uses **Postgres** exclusively.
-   - This separation ensures that ingestion and analytics are handled independently.
+   - This separation ensures that ingestion and analytics are handled independently and for easy conrol on new devlopment features.
 
 2. **Analytics**:
-   - The analytics process uses **Trino** for executing queries, leveraging its strengths for analytics workloads.
+   - The analytics process uses **Trino** for executing queries, leveraging its strengths for analytics workloads and in memmpry calculations.
 
 ### ETL Design
 - The ETL process is designed with three main tables:
   1. **Launches**: 
      - This table is appended with new rows on every run.
+     - NOTE: history data can be insert using commented code for testing perposes.
   2. **Payloads**:
      - Contains payload-specific data to support analytics queries.
   3. **Launchpad**:

@@ -12,6 +12,7 @@ This project is designed to execute pre-defined SQL queries for analytics purpos
 - Provides an entry point to run multiple analytics queries.
 - Logs query execution status and results.
 - Clean the env from unrelevant data for the next run.
+- If history data needed, there is commented code that do the work.
 
 
 ## Prerequisites

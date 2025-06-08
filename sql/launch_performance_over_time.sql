@@ -2,7 +2,8 @@ SELECT
     year,
     total_launches,
     successful_launches,
-    ROUND(successful_launches / NULLIF(total_launches, 0), 4) AS success_rate
+    # need to replace the 0 maybe add case statement
+    ROUND(successful_launches / NULLIF(total_launches, ), 4) AS success_rate
 FROM 
     postgres.public.aggregated_data
 WHERE 

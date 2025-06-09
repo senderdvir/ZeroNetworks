@@ -25,7 +25,7 @@ SELECT
     EXTRACT(YEAR FROM lch.date_utc::timestamp)::TEXT AS year,
     COUNT(*) AS total_launches,
     COUNT(CASE WHEN success = true THEN 1 END) AS successful_launches,
-    AVG(pld.mass_kg) AS avg_payload_mass,
+    COALESCE(ROUND(AVG(pld.mass_kg),2),0) AS avg_payload_mass,
     TRUE AS is_current,
     NOW() AS calculate_time
 FROM public.launches_raw_data AS lch

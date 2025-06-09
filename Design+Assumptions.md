@@ -12,10 +12,10 @@
 ## Design and Assumptions
 
 ### Design
-- You provided the local data environment tools: **Postgres** and **Trino**. These are used as the primary data tools for this project.
-- There only way to use trime tavel(like in iceberg) is to save the aggregated data with is_current value.
-- The code should be runnable this scheduler like Airflow or any other scheduler.
-- The code should be easy to add more logic and tables and need to be clear how to do that.
+- You provided the local data environment tools: Postgres and Trino. These are used as the primary data tools for this project.
+- The only way to use time travel (like in Iceberg) is to save the aggregated data with an is_current value.
+- The code should be runnable by a scheduler like Airflow or any other scheduler.
+- The code should be easy to extend with more logic and tables, and it should be clear how to do that.
 
 ### Assumptions
 1. **Ingestion**:

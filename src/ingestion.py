@@ -4,6 +4,7 @@ import requests
 import logging
 from sqlalchemy import create_engine
 from analytics import run_analytics_queries
+from models import Payloads, Launches, Launchpad
 
 from config import (
     SPACEX_API_URL_LATEST_LAUNCHES,
@@ -63,6 +64,7 @@ def map_launch_data(launch: dict) -> dict:
         "id": launch.get("id"),
         "name": launch.get("name"),
         "date_utc": launch.get("date_utc"),
+        "static_fire_date_utc": launch.get("static_fire_date_utc"),
         "rocket": launch.get("rocket"),
         "success": launch.get("success"),
         "flight_number": launch.get("flight_number"),
@@ -117,6 +119,11 @@ def ingest_launches_data() -> None:
     Fetch, transform, and ingest latest launche into the database.
     """
     launch_json = fetch_data(SPACEX_API_URL_LATEST_LAUNCHES)
+    try:
+        Launches(**launch_json)  # Validate launch structure
+    except Exception as e:
+        logger.error(f"Validation error for launch with ID: {launch_json.get('id')}", exc_info=True)
+        return
     logger.info(f"Ingesting {len(launch_json)} launches")
 
     try:
@@ -155,6 +162,7 @@ def ingest_payloads_data() -> None:
 
     for payload in payloads_json:
         try:
+            Payloads(**payload)  # Validate payload structure
             mapped = map_payloads_data(payload)
             df = create_df_from_json(mapped)
             insert_data_to_postgres(df, "payloads_raw_data")
@@ -171,6 +179,11 @@ def ingest_launchpad_data() -> None:
 
     for launchpad in launchpad_json:
         try:
+            try:
+                Launchpad(**launchpad)  # Validate launchpad structure
+            except Exception as e:
+                logger.error(f"Validation error for launchpad with ID: {launchpad.get('id')}", exc_info=True)
+                continue
             mapped = map_launchpad_data(launchpad)
             df = create_df_from_json(mapped)
             insert_data_to_postgres(df, "launchpad_raw_data")
@@ -197,7 +210,7 @@ def run() -> None:
     logger.info("Starting ETL pipeline.")
     try:
         init_tables()
-        run_db_rules()
+        # run_db_rules()
         ingest_launches_data()
         ingest_payloads_data()
         ingest_launchpad_data()

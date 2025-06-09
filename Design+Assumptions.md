@@ -41,4 +41,6 @@
      - It includes a column `is_current` to indicate whether a value is up-to-date or not.
 
 ## Additional Notes
-- I didn’t want to send an email on Shavuot, so I included this information here instead. Let me know if you need further clarification or additional details.
+- I didn’t want to send an email on Shavuot, so I’m including this information here instead. Let me know if you need any clarification or additional details.
+- Use Poetry or uv as package managers instead of a requirements.txt file.
+- Add a DLQ (Dead Letter Queue) table for rows that don’t fit the business logic.
